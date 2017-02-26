@@ -1,0 +1,281 @@
+### ignore directory
+ref/
+bld/
+build/
+html/
+doxygen/
+cmake-build-*/
+Doxyfile
+### cmake build dir
+.autosave
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+test_basic
+test_graph
+
+# Qt-es
+*.pro
+*.pro.user
+*.pro.user.*
+moc_*.cpp
+qrc_*.cpp
+Makefile
+*-build-*
+
+### /.gitignore-boilerplates/CMake.gitignore
+CMakeCache.txt
+CMakeFiles
+Makefile
+cmake_install.cmake
+install_manifest.txt
+CmakeFiles/
+*.cmake
+
+### /.gitignore-boilerplates/Autotools.gitignore
+
+Makefile.in
+
+/autom4te.cache
+/aclocal.m4
+/compile
+/configure
+/depcomp
+/install-sh
+/missing
+
+
+### /.gitignore-boilerplates/Objective-C.gitignore
+
+# Xcode
+.DS_Store
+*/build/*
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata
+profile
+*.moved-aside
+DerivedData
+.idea/
+*.hmap
+
+
+### /.gitignore-boilerplates/Global/CVS.gitignore
+
+/CVS/*
+*/CVS/*
+.cvsignore
+*/.cvsignore
+
+### /.gitignore-boilerplates/Global/Emacs.gitignore
+
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+.elc
+auto-save-list
+tramp
+.\#*
+
+# Org-mode
+.org-id-locations
+*_archive
+
+
+### /.gitignore-boilerplates/Global/Eclipse.gitignore
+
+*.pydevproject
+.project
+.metadata
+bin/**
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath
+
+# External tool builders
+.externalToolBuilders/
+
+# Locally stored "Eclipse launch configurations"
+*.launch
+
+# CDT-specific
+.cproject
+
+# PDT-specific
+.buildpath
+
+
+### /.gitignore-boilerplates/Global/Archives.gitignore
+
+# It's better to unpack these files and commit the raw source because
+# git has its own built in compression methods.
+*.7z
+*.jar
+*.rar
+*.zip
+*.gz
+*.bzip
+*.bz2
+*.xz
+*.lzma
+
+#packing-only formats
+*.iso
+*.tar
+
+#package management formats
+*.dmg
+*.xpi
+*.gem
+*.egg
+*.deb
+*.rpm
+
+
+### /.gitignore-boilerplates/Global/OSX.gitignore
+
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+
+# Thumbnails
+._*
+
+# Files that might appear on external disk
+.Spotlight-V100
+.Trashes
+
+
+### /.gitignore-boilerplates/Global/SVN.gitignore
+
+.svn/
+
+
+### /.gitignore-boilerplates/Global/Mercurial.gitignore
+
+/.hg/*
+*/.hg/*
+.hgignore
+
+
+### /.gitignore-boilerplates/Global/SublimeText.gitignore
+
+# SublimeText project files
+*.sublime-workspace
+
+
+### /.gitignore-boilerplates/Global/Tags.gitignore
+
+# Ignore tags created by etags and ctags
+TAGS
+!TAGS/
+tags
+!tags/
+
+
+### /.gitignore-boilerplates/Global/TextMate.gitignore
+
+*.tmproj
+*.tmproject
+tmtags
+
+
+### /.gitignore-boilerplates/Global/Windows.gitignore
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+
+### /.gitignore-boilerplates/Global/Linux.gitignore
+
+!.gitignore
+*~
+
+
+### /.gitignore-boilerplates/Global/vim.gitignore
+
+.*.s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+*~
+
+### QtCreator
+CMakeLists.txt.user
+
+### vscode
+.vscode
+
+### clion
+.idea:
+
+# VS artifacts
+*.sln
+*.db
+*.vcxproj
+*.filters
+*.opendb
+
+##gsl
+tests/CMakeFiles
+tests/Debug
+*.opensdf
+*.sdf
+tests/*tests.dir
+*.vcxproj
+*.vcxproj.filters
+*.sln
+*.tlog
+Testing/Temporary/*.*
+*.suo
+.vs/

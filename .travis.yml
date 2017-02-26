@@ -1,0 +1,188 @@
+# Distributed under the Boost Software License, Version 1.0.
+
+language: cpp
+sudo: false
+
+cache:
+  directories:
+    - ${TRAVIS_BUILD_DIR}/deps/cmake
+    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.8.1/install
+    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.9.0/install
+    - ${TRAVIS_BUILD_DIR}/deps/boost-1.62.0
+    - ${TRAVIS_BUILD_DIR}/deps/boost-1.63.0
+
+matrix:
+  include:
+
+    # 1/ Linux Clang Builds
+    - os: linux
+      env: CLANG_VERSION=3.8 BUILD_TYPE=Debug BOOST_VERSION=default
+      addons: &clang38
+        apt:
+          packages:
+            - clang-3.8
+            - g++-5
+          sources: &sources
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.8
+    - os: linux
+      env: CLANG_VERSION=3.8 BUILD_TYPE=Release BOOST_VERSION=default
+      addons: *clang38
+    - os: linux
+      env: CLANG_VERSION=3.9 BUILD_TYPE=Debug BOOST_VERSION=default
+      addons: &clang39
+        apt:
+          packages:
+            - clang-3.9
+            - g++-5
+          sources: &sources
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.9
+    - os: linux
+      env: CLANG_VERSION=3.9 BUILD_TYPE=Release BOOST_VERSION=default
+      addons: *clang39
+
+    # 2/ Linux GCC Builds
+    - os: linux
+      env: GCC_VERSION=5 BUILD_TYPE=Debug BOOST_VERSION=default
+      addons: &gcc5
+        apt:
+          packages: g++-5
+          sources: *sources
+    - os: linux
+      env: GCC_VERSION=5 BUILD_TYPE=Release BOOST_VERSION=default
+      addons: *gcc5
+    - os: linux
+      env: GCC_VERSION=6 BUILD_TYPE=Debug BOOST_VERSION=default
+      addons: &gcc6
+        apt:
+          packages: g++-6
+          sources: *sources
+    - os: linux
+      env: GCC_VERSION=6 BUILD_TYPE=Release BOOST_VERSION=default
+      addons: *gcc6
+
+    # 3/ OSX Clang Builds
+
+    - os: osx
+      env: BUILD_TYPE=Debug BOOST_VERSION=default
+      osx_image: xcode8
+      compiler: clang
+
+    - os: osx
+      env: BUILD_TYPE=Release BOOST_VERSION=default
+      osx_image: xcode8
+      compiler: clang
+
+install:
+  - if [[ -n "$CLANG_VERSION" ]]; then export CXX=clang++-$CLANG_VERSION CC=clang-$CLANG_VERSION; fi
+  - if [[ -n "$GCC_VERSION" ]]; then export CXX=g++-$GCC_VERSION CC=gcc-$GCC_VERSION; fi
+  - export JOBS=2
+  - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
+  - mkdir -p ${DEPS_DIR} && cd ${DEPS_DIR}
+
+  ############################################################################
+  # Setup default versions and override compiler if needed
+  ############################################################################
+  - if [[ "${BOOST_VERSION}" == "default" ]]; then BOOST_VERSION=1.62.0; fi
+  - DOCUMENTATION=true
+  - BOOST_BUILD=true
+  ############################################################################
+  # Install Boost headers
+  ############################################################################
+  - |
+   if [[ "${BOOST_VERSION}" != "" ]]; then
+     BOOST_DIR=${DEPS_DIR}/boost-${BOOST_VERSION}
+     if [[ -z "$(ls -A ${BOOST_DIR})" ]]; then
+       if [[ "${BOOST_VERSION}" == "trunk" ]]; then
+         BOOST_URL="http://github.com/boostorg/boost.git"
+         travis_retry git clone --depth 1 --recursive --quiet ${BOOST_URL} ${BOOST_DIR} || exit 1
+         (cd ${BOOST_DIR} && ./bootstrap.sh && ./b2 headers)
+       else
+         BOOST_URL="http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION//\./_}.tar.gz"
+         mkdir -p ${BOOST_DIR}
+         { travis_retry wget --quiet -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
+       fi
+     fi
+     CMAKE_OPTIONS+=" -DBOOST_ROOT=${BOOST_DIR}"
+   fi
+
+  ############################################################################
+  # Install Boost.Build
+  ############################################################################
+  - |
+    if [[ "${BOOST_BUILD}" == "true" ]]; then
+      (cd ${BOOST_DIR}/tools/build && ./bootstrap.sh && ./b2 install --prefix=${DEPS_DIR}/b2)
+      export PATH=${DEPS_DIR}/b2/bin:${PATH}
+    fi
+
+  ############################################################################
+  # Install a recent CMake (unless already installed on OS X)
+  ############################################################################
+  - |
+    if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
+      if [[ -z "$(ls -A ${DEPS_DIR}/cmake/bin)" ]]; then
+        CMAKE_URL="https://cmake.org/files/v3.6/cmake-3.6.2-Linux-x86_64.tar.gz"
+        mkdir -p cmake && travis_retry wget --no-check-certificate --quiet -O - "${CMAKE_URL}" | tar --strip-components=1 -xz -C cmake
+      fi
+      export PATH="${DEPS_DIR}/cmake/bin:${PATH}"
+    else
+      if ! brew ls --version cmake &>/dev/null; then brew install cmake; fi
+    fi
+
+  ############################################################################
+  # [linux]: Install the right version of libc++
+  ############################################################################
+  - |
+    if [[ -n "$CLANG_VERSION" && "${TRAVIS_OS_NAME}" == "linux" && "${STDLIB}" != "libstdc++" ]]; then
+      if [[ "$CLANG_VERSION" == "3.8" ]]; then LLVM_VERSION="3.8.1"; fi
+      if [[ "$CLANG_VERSION" == "3.9" ]]; then LLVM_VERSION="3.9.0"; fi
+      LLVM_ROOT="${DEPS_DIR}/llvm-${LLVM_VERSION}"
+      LLVM_URL="http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz"
+      LIBCXX_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz"
+      LIBCXXABI_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxxabi-${LLVM_VERSION}.src.tar.xz"
+      if [[ -z "$(ls -A ${LLVM_ROOT}/install/include)" ]]; then
+        mkdir -p "${LLVM_ROOT}" "${LLVM_ROOT}/build" "${LLVM_ROOT}/projects/libcxx" "${LLVM_ROOT}/projects/libcxxabi"
+        travis_retry wget --quiet -O - "${LLVM_URL}" | tar --strip-components=1 -xJ -C "${LLVM_ROOT}"
+        travis_retry wget --quiet -O - "${LIBCXX_URL}" | tar --strip-components=1 -xJ -C "${LLVM_ROOT}/projects/libcxx"
+        travis_retry wget --quiet -O - "${LIBCXXABI_URL}" | tar --strip-components=1 -xJ -C "${LLVM_ROOT}/projects/libcxxabi"
+        (cd "${LLVM_ROOT}/build" && cmake .. -DCMAKE_CXX_COMPILER="$CXX" -DCMAKE_C_COMPILER="$CC" -DCMAKE_INSTALL_PREFIX="${LLVM_ROOT}/install" -DCMAKE_BUILD_TYPE=$BUILD_TYPE)
+        (cd "${LLVM_ROOT}/build/projects/libcxx" && make install -j$JOBS)
+        (cd "${LLVM_ROOT}/build/projects/libcxxabi" && make install -j$JOBS)
+      fi
+      export CXXFLAGS="-I ${LLVM_ROOT}/install/include/c++/v1"
+      export LDFLAGS="-L ${LLVM_ROOT}/install/lib -lc++ -lc++abi"
+      export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_ROOT}/install/lib"
+    fi
+
+  ############################################################################
+  # Install a recent Doxygen
+  ############################################################################
+  - |
+    if [[ "${DOCUMENTATION}" == "true" ]]; then
+      DOXYGEN_URL="http://ftp.stack.nl/pub/users/dimitri/doxygen-1.8.11.linux.bin.tar.gz"
+      mkdir doxygen && travis_retry wget --quiet -O - ${DOXYGEN_URL} | tar --strip-components=1 -xz -C doxygen
+      export PATH=${DEPS_DIR}/doxygen/bin:${PATH}
+    fi
+
+  - cd ${TRAVIS_BUILD_DIR}
+
+before_script:
+  - cmake . -Bbuild -DCMAKE_CXX_COMPILER="$CXX" -DCMAKE_C_COMPILER="$CC" -DCMAKE_BUILD_TYPE=$BUILD_TYPE ${CMAKE_OPTIONS}
+  - cmake --build build -- -j$JOBS
+
+script:
+  - cd build
+  - ctest --output-on-failure -j$JOBS
+
+branches:
+  only:
+    - master
+    - develop
+
+notifications:
+  recipients:
+    - gaoxiaojun@gmail.com 
+  email:
+    on_success: change
+    on_failure: always
